@@ -30,7 +30,7 @@ func get(s storage, k string) (string, error) {
 }
 
 func put(s storage, k string, v string) error {
-	le := createLogEntry(k, v)
+	le := createLogEntry(k, []byte(v))
 	err := writeLogEntry(s, le)
 	if err != nil {
 		return err

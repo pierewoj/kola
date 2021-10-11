@@ -61,14 +61,13 @@ func createStorage(path string) (*storage, error) {
 	}, nil
 }
 
-func createLogEntry(k string, v string) logEntry {
+func createLogEntry(k string, v []byte) logEntry {
 	kB := []byte(k)
-	vB := []byte(v)
 	return logEntry{
 		keyLen: uint64(len(kB)),
-		valLen: uint64(len(vB)),
+		valLen: uint64(len(v)),
 		key:    kB,
-		val:    vB,
+		val:    v,
 	}
 }
 
