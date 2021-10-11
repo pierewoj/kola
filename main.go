@@ -33,7 +33,7 @@ func handler(s storage, w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	fmt.Fprintf(os.Stdout, "Starting webserv")
-	storage, err := createStorage()
+	storage, err := createStorage("/tmp/log.txt")
 	if err != nil {
 		panic(err)
 	}
