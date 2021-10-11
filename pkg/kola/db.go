@@ -2,10 +2,11 @@ package main
 
 import (
 	"errors"
+	"pierewoj/kola/logstorage"
 )
 
-func get(s storage, k string) (string, error) {
-	reader, err := createReader(s.path)
+func get(s logstorage.Storage, k string) (string, error) {
+	reader, err := logstorage.CreateReader(s.Path)
 	if err != nil {
 		return "", err
 	}
@@ -13,25 +14,25 @@ func get(s storage, k string) (string, error) {
 	found := false
 	v := make([]byte, 1)
 	for {
-		le, err := readEntry(reader)
+		le, err := logstorage.ReadEntry(reader)
 		if err != nil {
 			break
 		}
-		if string(le.key) == k {
+		if string(le.Key) == k {
 			found = true
-			v = le.val
+			v = le.Val
 		}
 	}
 
 	if found {
 		return string(v), nil
 	}
-	return "", errors.New("Key not found")
+	return "", errors.New("key not found")
 }
 
-func put(s storage, k string, v string) error {
-	le := createLogEntry(k, []byte(v))
-	err := writeLogEntry(s, le)
+func put(s logstorage.Storage, k string, v string) error {
+	le := logstorage.CreateLogEntry(k, []byte(v))
+	err := logstorage.WriteLogEntry(s, le)
 	if err != nil {
 		return err
 	}

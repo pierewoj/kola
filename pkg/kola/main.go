@@ -6,10 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"pierewoj/kola/logstorage"
 	"strings"
 )
 
-func handler(s storage, w http.ResponseWriter, r *http.Request) {
+func handler(s logstorage.Storage, w http.ResponseWriter, r *http.Request) {
 	key := strings.TrimPrefix(r.URL.Path, "/")
 	if r.Method == http.MethodPut {
 		body, err := ioutil.ReadAll(r.Body)
@@ -33,7 +34,7 @@ func handler(s storage, w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	fmt.Fprintf(os.Stdout, "Starting webserv")
-	storage, err := createStorage("/tmp/log.txt")
+	storage, err := logstorage.CreateStorage("/tmp/log.txt")
 	if err != nil {
 		panic(err)
 	}

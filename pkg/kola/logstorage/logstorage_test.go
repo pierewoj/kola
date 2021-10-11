@@ -1,31 +1,31 @@
-package main
+package logstorage
 
 import "testing"
 
 func TestWriteAndRead(t *testing.T) {
-	storage, err := createStorage("/tmp/test.txt")
+	storage, err := CreateStorage("/tmp/test.txt")
 	if err != nil {
 		t.Errorf("err=%s; want nil", err)
 		return
 	}
-	le := createLogEntry("a", []byte("XD"))
-	writeLogEntry(*storage, le)
+	le := CreateLogEntry("a", []byte("XD"))
+	WriteLogEntry(*storage, le)
 
-	reader, err := createReader(storage.path)
+	reader, err := CreateReader(storage.Path)
 	if err != nil {
 		t.Errorf("err=%s; want nil", err)
 		return
 	}
-	read, err := readEntry(reader)
+	read, err := ReadEntry(reader)
 	if err != nil {
 		t.Errorf("err=%s; want nil", err)
 		return
 	}
-	if string(read.key) != "a" {
-		t.Errorf("read.key=%s; want a", string(read.key))
+	if string(read.Key) != "a" {
+		t.Errorf("read.key=%s; want a", string(read.Key))
 	}
-	if string(read.val) != "XD" {
-		t.Errorf("read.key=%s; want XD", string(read.val))
+	if string(read.Val) != "XD" {
+		t.Errorf("read.key=%s; want XD", string(read.Val))
 	}
 	if read.keyLen != 1 {
 		t.Errorf("read.keyLen=%d; want 1", read.keyLen)

@@ -1,4 +1,4 @@
-package main
+package logstorage
 
 import (
 	"bufio"
@@ -7,19 +7,19 @@ import (
 	"os"
 )
 
-type storage struct {
+type Storage struct {
 	writer *bufio.Writer
-	path   string
+	Path   string
 }
 
-type logEntry struct {
+type LogEntry struct {
 	keyLen uint64
 	valLen uint64
-	key    []byte
-	val    []byte
+	Key    []byte
+	Val    []byte
 }
 
-func readEntry(reader *bufio.Reader) (*logEntry, error) {
+func ReadEntry(reader *bufio.Reader) (*LogEntry, error) {
 	keyLenBytes := make([]byte, 8)
 	_, err := io.ReadFull(reader, keyLenBytes)
 	if err != nil {
@@ -42,36 +42,36 @@ func readEntry(reader *bufio.Reader) (*logEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &logEntry{
+	return &LogEntry{
 		keyLen: keyLen,
 		valLen: valLen,
-		key:    keyBytes,
-		val:    valBytes,
+		Key:    keyBytes,
+		Val:    valBytes,
 	}, nil
 }
 
-func createStorage(path string) (*storage, error) {
-	writer, err := createWriter(path)
+func CreateStorage(path string) (*Storage, error) {
+	writer, err := CreateWriter(path)
 	if err != nil {
 		return nil, err
 	}
-	return &storage{
+	return &Storage{
 		writer: writer,
-		path:   path,
+		Path:   path,
 	}, nil
 }
 
-func createLogEntry(k string, v []byte) logEntry {
+func CreateLogEntry(k string, v []byte) LogEntry {
 	kB := []byte(k)
-	return logEntry{
+	return LogEntry{
 		keyLen: uint64(len(kB)),
 		valLen: uint64(len(v)),
-		key:    kB,
-		val:    v,
+		Key:    kB,
+		Val:    v,
 	}
 }
 
-func writeLogEntry(s storage, le logEntry) error {
+func WriteLogEntry(s Storage, le LogEntry) error {
 	// Key len
 	{
 		keyLenBytes := make([]byte, 8)
@@ -87,13 +87,13 @@ func writeLogEntry(s storage, le logEntry) error {
 	}
 
 	// Key, val
-	s.writer.Write(le.key)
-	s.writer.Write(le.val)
+	s.writer.Write(le.Key)
+	s.writer.Write(le.Val)
 
 	return s.writer.Flush()
 }
 
-func createReader(path string) (*bufio.Reader, error) {
+func CreateReader(path string) (*bufio.Reader, error) {
 	f, err := os.OpenFile(path, os.O_RDONLY, 0777)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func createReader(path string) (*bufio.Reader, error) {
 	return bufio.NewReader(f), nil
 }
 
-func createWriter(path string) (*bufio.Writer, error) {
+func CreateWriter(path string) (*bufio.Writer, error) {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, err
