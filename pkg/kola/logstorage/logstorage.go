@@ -19,9 +19,33 @@ type LogEntry struct {
 	Val    []byte
 }
 
-func ReadEntry(reader *bufio.Reader) (*LogEntry, error) {
+type ReadToken struct {
+	reader *bufio.Reader
+}
+
+type ReadResult struct {
+	LogEntry *LogEntry
+	Token    *ReadToken
+}
+
+func CreateStorage(path string) (*Storage, error) {
+	writer, err := createWriter(path)
+	if err != nil {
+		return nil, err
+	}
+	return &Storage{
+		writer: writer,
+		Path:   path,
+	}, nil
+}
+
+func (s *Storage) ReadEntry(token *ReadToken) (*ReadResult, error) {
+	reader, err := useReaderFromTokenOrCreate(s, token)
+	if err != nil {
+		return nil, err
+	}
 	keyLenBytes := make([]byte, 8)
-	_, err := io.ReadFull(reader, keyLenBytes)
+	_, err = io.ReadFull(reader, keyLenBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -42,36 +66,21 @@ func ReadEntry(reader *bufio.Reader) (*LogEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &LogEntry{
+	le := LogEntry{
 		keyLen: keyLen,
 		valLen: valLen,
 		Key:    keyBytes,
 		Val:    valBytes,
+	}
+	return &ReadResult{
+		LogEntry: &le,
+		Token: &ReadToken{
+			reader: reader,
+		},
 	}, nil
 }
 
-func CreateStorage(path string) (*Storage, error) {
-	writer, err := CreateWriter(path)
-	if err != nil {
-		return nil, err
-	}
-	return &Storage{
-		writer: writer,
-		Path:   path,
-	}, nil
-}
-
-func CreateLogEntry(k string, v []byte) LogEntry {
-	kB := []byte(k)
-	return LogEntry{
-		keyLen: uint64(len(kB)),
-		valLen: uint64(len(v)),
-		Key:    kB,
-		Val:    v,
-	}
-}
-
-func WriteLogEntry(s Storage, le LogEntry) error {
+func (s *Storage) WriteLogEntry(le LogEntry) error {
 	// Key len
 	{
 		keyLenBytes := make([]byte, 8)
@@ -93,15 +102,33 @@ func WriteLogEntry(s Storage, le LogEntry) error {
 	return s.writer.Flush()
 }
 
-func CreateReader(path string) (*bufio.Reader, error) {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0777)
+func CreateLogEntry(k string, v []byte) LogEntry {
+	kB := []byte(k)
+	return LogEntry{
+		keyLen: uint64(len(kB)),
+		valLen: uint64(len(v)),
+		Key:    kB,
+		Val:    v,
+	}
+}
+
+func useReaderFromTokenOrCreate(s *Storage, token *ReadToken) (*bufio.Reader, error) {
+	if token == nil {
+		return createReader(s)
+	} else {
+		return token.reader, nil
+	}
+}
+
+func createReader(s *Storage) (*bufio.Reader, error) {
+	f, err := os.OpenFile(s.Path, os.O_RDONLY, 0777)
 	if err != nil {
 		return nil, err
 	}
 	return bufio.NewReader(f), nil
 }
 
-func CreateWriter(path string) (*bufio.Writer, error) {
+func createWriter(path string) (*bufio.Writer, error) {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, err
