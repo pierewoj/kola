@@ -34,7 +34,11 @@ func handler(s logstorage.Storage, w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	fmt.Fprintf(os.Stdout, "Starting webserv")
-	storage, err := logstorage.CreateStorage("/tmp/log.txt")
+	provider, err := logstorage.CreateIoPriovider("/tmp/log.txt")
+	if err != nil {
+		panic(err)
+	}
+	storage, err := logstorage.CreateStorage(provider)
 	if err != nil {
 		panic(err)
 	}

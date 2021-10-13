@@ -3,7 +3,8 @@ package logstorage
 import "testing"
 
 func TestWriteAndRead(t *testing.T) {
-	storage, err := CreateStorage("/tmp/test.txt")
+	provider, _ := CreateIoPriovider("/tmp/test.txt")
+	storage, err := CreateStorage(provider)
 	if err != nil {
 		t.Errorf("err=%s; want nil", err)
 		return

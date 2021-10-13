@@ -1,15 +1,13 @@
 package logstorage
 
 import (
-	"bufio"
 	"encoding/binary"
 	"io"
-	"os"
 )
 
 type Storage struct {
-	writer *bufio.Writer
-	Path   string
+	writer     io.Writer
+	ioProvider IoProvider
 }
 
 type LogEntry struct {
@@ -20,7 +18,7 @@ type LogEntry struct {
 }
 
 type ReadToken struct {
-	reader *bufio.Reader
+	reader io.Reader
 }
 
 type ReadResult struct {
@@ -28,14 +26,14 @@ type ReadResult struct {
 	Token    *ReadToken
 }
 
-func CreateStorage(path string) (*Storage, error) {
-	writer, err := createWriter(path)
+func CreateStorage(ioProvider IoProvider) (*Storage, error) {
+	writer, err := ioProvider.GetWriter()
 	if err != nil {
 		return nil, err
 	}
 	return &Storage{
-		writer: writer,
-		Path:   path,
+		writer:     writer,
+		ioProvider: ioProvider,
 	}, nil
 }
 
@@ -99,7 +97,7 @@ func (s *Storage) WriteLogEntry(le LogEntry) error {
 	s.writer.Write(le.Key)
 	s.writer.Write(le.Val)
 
-	return s.writer.Flush()
+	return s.ioProvider.Flush()
 }
 
 func CreateLogEntry(k string, v []byte) LogEntry {
@@ -112,26 +110,10 @@ func CreateLogEntry(k string, v []byte) LogEntry {
 	}
 }
 
-func useReaderFromTokenOrCreate(s *Storage, token *ReadToken) (*bufio.Reader, error) {
+func useReaderFromTokenOrCreate(s *Storage, token *ReadToken) (io.Reader, error) {
 	if token == nil {
-		return createReader(s)
+		return s.ioProvider.GetReader()
 	} else {
 		return token.reader, nil
 	}
-}
-
-func createReader(s *Storage) (*bufio.Reader, error) {
-	f, err := os.OpenFile(s.Path, os.O_RDONLY, 0777)
-	if err != nil {
-		return nil, err
-	}
-	return bufio.NewReader(f), nil
-}
-
-func createWriter(path string) (*bufio.Writer, error) {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
-	if err != nil {
-		return nil, err
-	}
-	return bufio.NewWriter(f), nil
 }
